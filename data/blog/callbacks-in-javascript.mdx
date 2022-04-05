@@ -1,0 +1,143 @@
+---
+title: 'Callbacks In JavaScript'
+publishedAt: '2022-04-05'
+summary: 'Callback functions forms the basis of asynchronous JavaScript, and yet often misunderstood.'
+---
+
+### At a glance:
+
+-   [What is a callback function?](#what-is-a-callback-function)
+-   [Synchronous v/s Asynchronous Callbacks](#synchronous-vs-asynchronous-callbacks)
+-   [Callback Hell](#callback-hell)
+-   [Error First Callbacks: A Convention](#error-first-callbacks-a-convention)
+
+## <a name="what-is-a-callback-function"></a> What is a callback function?
+
+Simply put, a callback function is a function that is passed as an argument to another function
+that invokes or "calls back" the callback function.
+
+The name callback is just a convention for functions that are passed as arguments to other function.
+
+```js
+function cb() {
+    // cb does some work
+}
+
+function func(someParams, cb) {
+    // func does some work
+    cb();
+    // func does some more work
+}
+```
+
+Here, `cb` is a callback function that is passed as an argument to the function func. The higher
+order function `func` when executed calls back the callback function.
+
+Now the obvious question that arises is: When is a callback function executed?
+
+<HighlightedNote content="Many if not all of us have the notion of associating callbacks with asynchronousity. Well, it turns out that callbacks are synchronous as well." />
+
+## <a name="synchronous-vs-asynchronous-callbacks"></a> Synchronous v/s Asynchronous Callbacks
+
+Synchronous callback executes **along with the execution** of the higher order function to which
+the callback is passed to. Synchronous callbacks are blocking in nature.
+
+For example, callbacks passed to array's native higher order functions like map, forEach, find,
+etc. are executed synchronously.
+
+```js
+const items = [item1, item2, item3];
+
+function logItem(item) {
+    console.log(item);
+}
+
+items.forEach(logItem);
+// logs item1, item2, item3
+```
+
+Here, the callback `logItem` is executed synchronously for each item of `items` array.
+
+Asynchronous callback, in contrary, is non-blocking and is **executed at a later time**, for example,
+after triggering of some event, it doesn’t necessarily executes along with the execution of the
+function it is being passed to.
+
+Examples of asynchronous callbacks are the callbacks being passed to timer functions like
+`setTimeout`, `setInterval`.
+
+```js
+setTimeout(function logAfter1Seconds() {
+    console.log('after 1 sec');
+}, 1000);
+// logs "after 1 sec" after 1 second
+
+setInterval(function logEvery1Seconds() {
+    console.log('every 1 sec');
+}, 1000);
+// logs "every 1 sec" after every 1 second
+```
+
+DOM event handler functions are also executed asynchronously upon occurence of events that they
+are attached to.
+
+```js
+const btn = document.querySelector('#btn-id');
+btn.addEventListener('click', function handleClick() {
+    console.log('Button clicked!');
+});
+// logs 'Button clicked!' when the button is clicked
+```
+
+## <a name="callback-hell"></a> Callback Hell
+
+When we have to perform a series of sequential asynchronous operations/tasks one after the other,
+we wrap the tasks/functions inside one another as callback functions.
+
+Let's take an example. Let's say, we need to prepare a meal and serve it. There are several steps
+that are involved from getting the ingredients to serving the cooked meal: getting ingredients,
+cook the meal, get plates to serve, and then serve the meal. If we were to code out these steps,
+it will look something like this:
+
+```js
+const prepareMeal = nextStep => {
+  getIngredients(function (ingredients) {
+    cookMeal(ingredients, function (cookedMeal) {
+      getPlate(function (plates) {
+        putMealInPlate(plates, cookedMeal, function(meal) {
+          nextStep(meal)
+        })
+      })
+    })
+  })
+}
+
+// Make and serve the meal
+prepareMeal(function (meal) => {
+  serveMeal(meal)
+})
+```
+
+Notice the pyramid shaped structure our code is taking on, famously referred to as 'callback hell'
+or 'pyramid of doom'. These are just few steps that we performed for preparing and serving a
+meal. If it were a complex tasks involving many more steps, the code complexity and readibility
+would have gone for a toss!
+
+JavaScript promises, introduced in ES6/ES2015 helped overcome this by linearly chaining the steps
+required to perform an operation with multiple asynchronous steps. Async/await, introduced in ES2017
+simplified it even more by giving promises a syntactically sugared synchronous looking structure.
+
+## <a name="error-first-callbacks-a-convention"></a> Error First Callbacks: A Convention
+
+Passing error object as the first argument to a callback function is often a reason why people,
+specially beginners, scratch their head figuring out why we do this.
+
+```js
+someFunc(function (err, someData) {
+    if (err) {
+        throw err; // or return or do whatever
+    }
+    // rest of the function
+});
+```
+
+Passing error object as the first argument is just a convention and is considered a good practice.
