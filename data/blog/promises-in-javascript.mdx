@@ -1,0 +1,149 @@
+---
+title: 'Promises In JavaScript'
+publishedAt: '2022-04-13'
+summary: 'A Promise is a placeholder for the result of an asynchronous operation. Chain them for superpowers.'
+---
+
+### At a glance:
+
+-   [What is a promise?](#what-is-a-promise)
+-   [Promise States](#promise-states)
+-   [Promise Chaining](#promise-chaining)
+-   [Promise() Constructor and Static Methods](#promise-constructor-and-static-methods)
+
+## <a name="what-is-a-promise"></a> What is a promise?
+
+A promise object depicts a "promise" to get the result of an asynchronous operation, essentially
+acting as a placeholder for the value that is to be returned by the asynchronous operation.
+
+For example, to get data from a server, we make an HTTP request using the fetch API like this:
+
+```js
+// fetch returns a promise
+const res = fetch('https://someapi.com/api/some_end_point');
+```
+
+Here, `res` acts as a placeholder promise object that gets response data from the API.
+
+## <a name="promise-states"></a> Promise States
+
+A promise can be in one of these 3 states:
+
+-   **pending**: when promise is just being created. Promise remains in pending state as long as
+    the asynchronous operation is taking place
+-   **fulfilled**: when the asynchronous operation completes successfully
+-   **rejected**: when asynchronous operation fails
+
+A promise fulfilled or rejected is **settled**.
+
+Let's build up on top of the example stated above.
+
+```js
+// fetch returns a promise
+const res = fetch('https://someapi.com/api/some_end_point');
+res.then((res) => console.log(res));
+res.catch((err) => console.log(err));
+```
+
+We can access the fulfilled value of a promise through `.then()` method.
+Similarly, we can access the rejected value / error of a rejected promise through `.catch()`
+method. Alternatively, we can access the rejected value of a promise in the second argument of
+the `.then()` method.
+
+```js
+const res = fetch('https://someapi.com/api/some_end_point');
+res.then(
+    (res) => {
+        console.log(res);
+    },
+    (err) => {
+        console.log(err);
+    }
+);
+```
+
+## <a name="promise-chaining"></a> Promise Chaining
+
+We saw that we can `.then()` and `.catch()` a promise to access the fulfilled and rejected values
+respectively. It turns out, `.then()` and `.catch()` themselves return a promise, which poses a
+great opportunity to perform multiple operations on the promise values.
+
+```js
+somePromise
+    .then((res) => res.json())
+    .then((res) => console.log(res))
+    .catch((err) => console.log(err));
+```
+
+If any of the promise rejects, then the flow gets to the first `.catch()` block surpassing all
+`.then()` blocks.
+
+## <a name="promise-constructor-and-static-methods"></a> Promise() Contructor and Static Methods
+
+We can create our own promise object using `Promise` constructor. The constructor accepts a
+callback function with two callbacks as arguments: one for fulfilled and other for rejected
+promise.
+
+```js
+const promise = new Promise((resolve, reject) => {
+    if (asyncOperationSuccess) {
+        resolve(value);
+    } else {
+        reject(error);
+    }
+});
+```
+
+### Static Methods of Promise Object:
+
+1. **Promise.all()**:
+
+```js
+const promises = Promise.all([promise1, promise2, promise3,...]);
+```
+
+-   Accepts an array of promises and returns a promise
+-   If all promises of the array get fulfilled, the returned promise from `Promise.all()` gets
+    resolved with value equal to the list of fulfilled values of all promises
+-   Even if (and as soon as) one promise gets rejected in the array of promises, the returned
+    promise from `Promise.all()` gets rejected with the value of the rejected promise
+
+2. **Promise.any()**:
+
+```js
+const promises = Promise.any([promise1, promise2, promise3,...]);
+```
+
+-   Accepts an array of promises and returns a promise
+-   Even if (and as soon as) one promise gets resolved in the array of promises, the returned
+    promise from `Promise.any()` gets resolved with the value of the resolved promise
+-   If all promises of the array get rejected, the returned promise from `Promise.any()` gets
+    rejected with an aggregate error containing the rejection values of the array of promises
+
+3. **Promise.allSettled()**:
+
+```js
+const promises = Promise.allSettled([promise1, promise2, promise3,...]);
+/*
+let's assume promise1 and promise2 get fulfilled and promise3 gets rejected
+promises: {
+    {status: 'fulfilled', value: value1},
+    {status: 'fulfilled', value: value2},
+    {status: 'rejected', reason: reason3}
+}
+*/
+```
+
+-   Accepts an array of promises and returns a promise
+-   Returns an array of objects containing status and value/reason of all settled promises
+
+4. **Promise.race()**:
+
+```js
+const promise = Promise.race([promise1, promise2, promise3,...]);
+```
+
+-   Accepts an array of promises and returns a promise
+-   Returns a promise which gets fulfilled or rejected depending on the promise that settles first.
+    If the first promise to settle is fulfilled, the resultant promise gets fulfilled. If the first
+    promise to settle gets rejected, the resultant promise gets rejected.
