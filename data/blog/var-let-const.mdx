@@ -1,0 +1,289 @@
+---
+title: 'var, let, const debunked'
+publishedAt: '2022-04-24'
+summary: 'Popular belief: Identifiers declared only with var are hoisted. Turns out, those with let and const are also hoisted!'
+---
+
+In this article, we will dive deep into var, let and const, especially into the nuances
+associated with which one to use when. We will also wipe out a common misconception around
+“hoisting”: variables declared with var are hoisted whereas those declared with let and const
+don’t.
+
+### At a glance:
+
+-   [Prerequisites](#prerequisites)
+-   [var](#var)
+-   [let](#let)
+-   [const](#const)
+-   [Hoisting: Function Expression v/s Function Declaration](#hoisting-function-expression-vs-function-declaration)
+
+## <a name="prerequisites"></a> Prerequisites
+
+### Scope
+
+Scope essentially signifies a mapping of the identifiers to the part of program they can be accessed from. More specifically, scope is called "lexical scope" which is determined during lexing/compile time (yes, JavaScript is compiled, at least, sort of). Local scope are of two types: function scope and block scope. Function scope, as its name suggests, is the code in context of the function definition. Block scope is the code in context within a block, represented by {}.
+
+```js
+function someFunc() {
+    // someFunction's scope
+}
+
+function someOtherFunc() {
+    // someOtherFunc's scope
+    if( /*some confition*/ ) {
+        // if condition's block scope
+    }
+    {
+    // another block scope
+    }
+}
+```
+
+### Function Declaration v/s Function Expression
+
+Below snippet differentiates the function declaration and function expression of a function someFunc:
+
+```js
+// function declaration
+function someFunc() {
+    //
+}
+
+// function expression
+var someFunc = function () {
+    // var or let or const
+    //
+};
+```
+
+## <a name="var"></a> var
+
+Variables declared with `var` are function scoped. Consider the snippet below:
+
+```js
+function someFunc() {
+    var flag = true;
+    if (flag) {
+        var result = 'someResult';
+    }
+    console.log(result); // someResult
+}
+```
+
+Here, the variable `flag` obviously belongs to `someFunc`'s scope. But have a look at `result`.
+`result` being declared in the if block scope is also accessible to `someFunc`'s. It "hoists" up
+to the top of its function scope.
+
+<HighlightedNote
+    content="Hoisting essentially means that when JS engine parses/compiles 
+JavaScript, it picks up the identifiers being declared in different scopes and maps them to the top 
+of their corresponding scopes."
+/>
+
+Let's try to access `result` before its initialization:
+
+```js
+function someFunc() {
+    var flag = true;
+    console.log(result); // undefined
+    if (flag) {
+        var result = 'someResult';
+    }
+}
+```
+
+While parsing, JS engine picks up `result` (along with `flag`), declares it on top of the function scope, and assigns the value `undefined` to it. Along with declaration, var variables are also initialized with `undefined`, in contrast to let and const hoisting which we will see further.
+
+Multiple `var` declarations with the same identifier name essentially does nothing. The identifier hoists as soon as it is first encountered and subsequent declarations are ignored when parsed. The variable can even be assigned references of multiple types.
+
+```js
+var dog = 'Ruby';
+
+function dog() {
+    console.log('Ruby');
+}
+
+// has no effect - already hoisted
+var dog;
+
+console.log(typeof dog); // function
+
+var dog = 'Ruby';
+
+console.log(typeof dog); // string
+```
+
+## <a name="let"></a> let
+
+Variables declared with `let` are block scoped. Consider the snippet below:
+
+```js
+function someFunc() {
+    var flag = true;
+    if (flag) {
+        let result = 'someResult';
+        console.log(result); // someResult
+    }
+    console.log(result); // Reference Error: result is not defined
+}
+```
+
+`result` being a block scoped variable is not accessible outside its scope (if block). Therefore, we get a reference error if we try to access result outside of the if block.
+
+Variables declared with let also hoist. It is just that they are not initialized with the value of `undefined` upon hoisting, and remain uninitialized until the initialization statement is encountered at runtime.
+
+```js
+function someFunc() {
+    var flag = true;
+    // some statements
+
+    if (flag) {
+        console.log(result); // Cannot access 'result' before initialization
+        let result = 'someResult';
+    }
+
+    // some more statements
+}
+```
+
+`result` is hoisted to the top of the if block, but is not initialized to any value while it is hoisted (unlike var, which gets initialized as undefined), resulting in the error - cannot access `result` before initialization. The time period between the let declared variables being hoisted and are initialized (initialized at runtime) is called the Temporal Dead Zone (TDZ). We cannot access a let (and const, as we will see later) variable while it is in TDZ. Read more about TDZ on <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let#temporal_dead_zone_tdz" target="_blank">MDN</a>.
+
+As we saw earlier, multiple var declarations with the same names are allowed. Multiple let declarations with the same identifier name becomes interesting:
+
+```js
+let dog = 'Ruby';
+
+/*
+...
+some code
+...
+*/
+
+let dog = 'Ruby'; // SyntaxError: Identifier 'dog' has already been declared
+```
+
+Similar will be the error if it were a var and let declarations of the same identifier name (in any order):
+
+```js
+var dog = 'Ruby';
+
+/*
+...
+some code
+...
+*/
+
+let dog = 'Ruby'; // SyntaxError: Identifier 'dog' has already been declared
+```
+
+## <a name="const"></a> const
+
+Identifiers declared with const need to be initialized at the time of declaration. They can't just only be declared and then intialized with a value at some later point of time.
+
+```js
+const num; // SyntaxError: Missing initializer in const declaration
+num = 1;
+console.log(num)
+```
+
+Being constants, const identifiers can't be re-assigned to a different reference.
+
+```js
+const num = 1;
+num = 2; // TypeError: Assignment to constant variable
+```
+
+But we can mutate the same reference in contrast to re-assigning/re-declaring, for example, in case of object literals and arrays:
+
+```js
+const obj = {
+    a: 2,
+    b: 3,
+};
+
+const arr = [1, 2, 3];
+
+obj.a = 4;
+arr[2] = 5;
+
+console.log(obj); // {a: 4, b: 3}
+console.log(arr); // [1, 2, 5]
+```
+
+Similar to let declarations, variables declared with `const` are block scoped.
+
+```js
+function someFunc() {
+    var flag = true;
+    if (flag) {
+        const result = 'someResult';
+        console.log(result); // someResult
+    }
+    console.log(result); // Reference Error: result is not defined
+}
+```
+
+Const identifiers hoists similar to let and remain uninitialized while they hoist to the top of the block scope.
+
+```js
+function someFunc() {
+    var flag = true;
+    // some statements
+
+    if (flag) {
+        console.log(result); // Cannot access 'result' before initialization: TDZ
+        const result = 'someResult';
+    }
+
+    // some more statements
+}
+```
+
+Multiple const declarations with the same identifier names are simply not possible like we saw in case of let, and also because of the fact that const identifiers can't be re-initialized or re-assigned.
+
+## <a name="hoisting-function-expression-vs-function-declaration"></a> Hoisting: Function Declaration v/s Function Expression
+
+Like variables, functions also hoists. Consider the snippet below:
+
+```js
+someFunc(); // executes someFunc
+
+// function declaration
+function someFunc() {
+    // ..
+}
+
+anotherFunc(); // ERROR! TypeError: anotherFunc is not a function
+
+// function expression
+var anotherFunc = function () {
+    // ..
+};
+
+// Even named function expression will not execute:
+someOtherFunc(); // TypeError: someOtherFunc is not a function
+
+var someOtherFunc = function someOtherFunc() {
+    // ..
+};
+```
+
+An initial observation would be that the function declarations hoist, whereas function expressions don't. Well, it turns out, identifiers of both function declarations and function expressions hoist, but those of function declarations are assigned the function reference as they get hoisted, and those of function expressions aren't.
+
+As a side note, an interesting comparison of function expression identifiers declared with let/const and those with var:
+
+```js
+someFunc(); // TypeError: someFunc is not a function
+
+someOtherFunc(); // ReferenceError: Cannot access 'someOtherFunc' before initialization
+
+var someFunc = function () {
+    //
+};
+
+let someOtherFunc = function () {
+    //
+};
+```
+
+`someFunc` gets hoisted and assigned the value of undefined. And since type of undefined is not of the type of a function, it results in TypeError. `someOtherFunc` on the other hand gets hoisted but due to TDZ between the runtimes of it being called and it being hoisted/parsed, it results in ReferenceError.
