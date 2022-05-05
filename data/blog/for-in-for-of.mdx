@@ -1,0 +1,356 @@
+---
+title: 'JavaScript for...in, for...of Loops'
+publishedAt: '2022-05-06'
+summary: "These for loops can't and shouldn't be used to loop over anything and everything. Know how to use them."
+---
+
+### At a glance:
+
+-   [Why these loops at the first place?](#why-these-loops-at-the-first-place)
+-   [The Core: Iteration v/s Enumeration](#the-core-iteration-vs-enumeration)
+-   [for...in Loop](#for-in-loop)
+-   [for...of Loop](#for-of-loop)
+
+## <a name="why-these-loops-at-the-first-place"></a> Why these loops at the first place?
+
+Having the classic for loop there, why do we even need `for...in` and `for...of` loops?
+Given the object based and prototypical nature of JavaScript, we need more than just looping over
+data structures like arrays. While it has been a while since the `for...in` loop
+was introduced in the JavaScript, `for...of` got introduced in ES6/ES2015.
+
+## <a name="the-core-iteration-vs-enumeration"></a> The Core: Iteration v/s Enumeration
+
+Both `for...in` and `for...of` can seem similar until we see on what fundamentals are they
+both based on. As we will see in greater detail, the `for...in` loop enumerates over the
+enumerable preperties of an object, whereas the `for...of` loop iterates over the values of an
+iterable object. The difference is subtle. Let's see how Google defines it:
+
+Iteration: "the repetition of a process or utterance"
+
+Enumeration: "the action of mentioning a number of things one by one"
+
+Iteration is simply looping over the values in a repetitive fashion treating all loops alike.
+Whereas enumeration can be thought of as listing all the items/properties of an object collection.
+
+## <a name="for-in-loop"></a> for...in Loop
+
+`for...in` loop is used to enumerate the properties of an object. It can operate on all the
+objects, be it object literal, array or any other object in JavaScript.
+
+Starting simple, let's enumerate over properties of an object:
+
+```js
+const capital_cities = {
+    india: 'new delhi',
+    usa: 'washington dc',
+    uk: 'london',
+    france: 'paris',
+};
+
+for (let country in capital_cities) {
+    console.log(country);
+}
+
+// logs india usa uk france
+```
+
+Notice how `for...in` loop enumerates over keys of the object, and not the values of the keys.
+If we were to print the values, we could do something as simple as this:
+
+```js
+const capital_cities = {
+    india: 'new delhi',
+    usa: 'washington dc',
+    uk: 'london',
+    france: 'paris',
+};
+
+for (let country in capital_cities) {
+    console.log(country + ': ' + capital_cities[country]);
+}
+
+/* logs
+india: new delhi
+usa: washington dc
+uk: london
+france: paris
+*/
+```
+
+`for...in` loop can loop over only those properties whose <a href="http://es5.github.io/#x8.6.1" target="_blank">[[Enumerable]]</a>
+attribute is set to true. By default, all the properties of objects defined using object literal
+syntax have their [[Enumerable]] attribute as true. We can have a look at the enumerable
+property of an object's property by <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor" target="_blank">Object.getOwnPropertyDescriptor()</a>.
+
+```js
+const capital_cities = {
+    india: 'new delhi',
+    usa: 'washington dc',
+    uk: 'london',
+    france: 'paris',
+};
+
+console.log(Object.getOwnPropertyDescriptor(capital_cities, 'india'));
+
+/* logs
+{
+  value: 'new delhi',
+  writable: true,
+  enumerable: true,
+  configurable: true
+}
+*/
+```
+
+Note that properties of objects explicitly defined through <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty" target="_blank">Object.defineProperty()</a>
+have enumerable set to false by default.
+
+Speaking of arrays, `for...in` when ran over an array returns a list of indices, which represent
+the keys in case of arrays:
+
+```js
+const cities = ['New Delhi', 'Washington DC', 'London', 'Paris'];
+
+for (let city in cities) {
+    console.log(city);
+}
+
+/* logs 0 1 2 3
+
+the cities array in its object form looks like this:
+const cities = {
+    0: 'New Delhi',
+    1: 'Washington DC',
+    2: 'London',
+    3: 'Paris'
+}
+*/
+
+// We can get values of these keys like this:
+for (let city in cities) {
+    console.log(cities[city]);
+}
+
+//logs New Delhi, Washington DC, London, Paris
+```
+
+Now it might become intuitive to think array in it's object form. Adding a property on cities
+array would look something like this:
+
+```js
+let cities = ['New Delhi', 'Washington DC', 'London', 'Paris'];
+
+cities.newCity = 'Berlin';
+
+for (let city in cities) {
+    console.log(city);
+}
+
+/* logs 0 1 2 3 newCity
+cities would now look like this:
+const cities = {
+    0: 'New Delhi',
+    1: 'Washington DC',
+    2: 'London',
+    3: 'Paris',
+    newCity: 'Berlin'
+}
+*/
+```
+
+One very important thing to take note of is that `for...in` loop also loops over all the
+enumerable properties up the prototype chain. As an example, let's add some properties on the
+built-in objects' prototypes:
+
+```js
+Object.prototype.method1 = function () {};
+Array.prototype.method2 = function () {};
+
+let cities = ['New Delhi', 'Washington DC', 'London', 'Paris'];
+
+for (let cityKeys in cities) {
+    console.log(cityKeys);
+}
+
+// logs 0 1 2 3 method2 method1
+```
+
+<HighlightedNote content="The above example alters the top level prototypes. However, its a bad practice to manipulate the top level prototypes." />
+
+If cities had multiple levels of inheritance along it's prototype chain, all of the
+enumerable properties would show up when cities had been looped over. We can check if a property
+belongs to the object being looped by <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty" target="_blank">Object.prototype.hasOwnProperty():</a>
+
+```js
+Object.prototype.method1 = function () {};
+Array.prototype.method2 = function () {};
+
+let cities = ['New Delhi', 'Washington DC', 'London', 'Paris'];
+
+for (let cityKey in cities) {
+    if (cities.hasOwnProperty(cityKey)) {
+        console.log(cityKey);
+    }
+}
+
+// logs 0 1 2 3
+```
+
+Another way through which we can get hold of an object's own properties is through
+Object.entries(). It returns an array of key-value pairs, and since an array is iterable, we can
+loop through it using the `for...of` loop or the traditional for loop.
+
+```js
+Object.prototype.method1 = function () {};
+
+const capital_cities = {
+    india: 'new delhi',
+    usa: 'washington dc',
+    uk: 'london',
+    france: 'paris',
+};
+
+let arr = Object.entries(capital_cities);
+console.log(arr);
+
+/* logs 
+[
+  [ 'india', 'new delhi' ],
+  [ 'usa', 'washington dc' ],
+  [ 'uk', 'london' ],
+  [ 'france', 'paris' ]
+]
+*/
+```
+
+`for...in` loop also does not loop over shadowed properties. Shadowed properties are those
+properties which are overridden by same name properties of the descendant object.
+
+```js
+const capital_cities = {
+    india: 'new delhi',
+    usa: 'washington dc',
+    uk: 'london',
+    france: 'paris',
+};
+
+// setting more_capital_cities' prototype to capital_cities
+let more_capital_cities = Object.create(capital_cities);
+
+// new york is not the capital of usa btw, just for example purpose :)
+more_capital_cities.usa = 'new york';
+more_capital_cities.canada = 'ottawa';
+
+for (let country in more_capital_cities) {
+    console.log(country + ': ' + more_capital_cities[country]);
+}
+
+/* logs
+usa: new york
+canada: ottawa
+india: new delhi
+uk: london
+france: paris
+*/
+```
+
+<HighlightedNote
+    content="We previously saw in few of the above examples, we can loop through an array using for...in loop. But
+generally speaking, for...in loop is optimized for generic objects, not arrays. Although it is quite
+subjective as different engines implementations vary, but generally, this is the case."
+/>
+
+## <a name="for-of-loop"></a> for...of Loop
+
+`for...of` loop is used to loop over an iterable object. Array, String, Map, Set, NodeList,
+HTMLCollection are examples of iterable objects in JavaScript.
+
+Let's first understand in brief what an iterable object is. An object is iterable if it
+defines the @@iterator key on its prototype chain. The @@iterator key is available
+through the Symbol.iterator property that lies on the prototype of iterable built-in objects.
+Symbol.iterator property's value is a function that returns an iterator of the iterable object.
+Let's understand it better by getting hold of an array iterator.
+
+```js
+let arr = [1, 2, 3, 4];
+let arrItr = arr[Symbol.iterator]();
+console.log(arrItr);
+```
+
+We get the following iterator function as output.
+
+<details>
+    <summary>
+        <i>Array Iterator</i>
+    </summary>
+    &nbsp;&nbsp;&nbsp;&nbsp;[[Prototype]]: Array Iterator <br />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;next: ƒ next(){' '}
+    <br />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Symbol(Symbol.toStringTag):
+    "Array Iterator" <br />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[Prototype]]:
+    Object <br />
+</details>
+
+When we iterate an iterable object using `for...of` loop, the `for...of` loop simply delegates
+the iteration process to the iterator function. The iterator function calls next() and gets all
+the values until all values are exhausted.
+
+`for...of` loop can't get any simpler. Here are examples showing looping over arrays, strings,
+maps and sets.
+
+```js
+let cities = ['New Delhi', 'Washington DC', 'London', 'Paris'];
+for (let city of cities) {
+    console.log(city);
+}
+// logs New Delhi, Washington DC, London, Paris
+
+let name = 'Prerak';
+for (let char of name) {
+    console.log(char);
+}
+// logs P r e r a k
+
+let citiesSet = new Set();
+citiesSet.add('New Delhi');
+citiesSet.add('Washington DC');
+citiesSet.add('London');
+citiesSet.add('Paris');
+for (let city of citiesSet) {
+    console.log(city);
+}
+//logs New Delhi, Washington DC, London, Paris
+
+let capital_cities = new Map();
+capital_cities.set('India', 'New Delhi');
+capital_cities.set('USA', 'Washington DC');
+capital_cities.set('UK', 'London');
+capital_cities.set('France', 'Paris');
+for (let capital_city of capital_cities) {
+    console.log(capital_city);
+}
+// logs ['India', 'New Delhi'], ['USA', 'Washington DC'], ['UK', 'London'], ['France', 'Paris']
+```
+
+<HighlightedNote content="Since an object does not have @@iterator implemented, it is not iterable." />
+<a href="https://stackoverflow.com/a/38777177" target="_blank">
+    This
+</a> pretty rationally argues why an object does not need for it to be iterable.
+
+It is worth a mention that we can convert any iterable object to an array. Continuing with the
+above example:
+
+```js
+// Convert a string to an array of characters
+let charArray = [...name]
+// charArray -> [ 'P', 'r', 'e', 'r', 'a', 'k' ]
+
+//Convert citiesSet to an array of cities
+let citiesArray = [...citiesSet]
+// citiesArray -> ['New Delhi', Washington DC', 'London', 'Paris']
+
+Convert capital_cities map to an array of cities
+let capital_cities = [...capital_cities]
+// [['India', 'New Delhi'], ['USA', 'Washington DC'], ['UK', 'London'], ['France', 'Paris']]
+```
