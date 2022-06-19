@@ -146,7 +146,7 @@ function someFunc() {
 }
 ```
 
-`result` is hoisted to the top of the if block, but is not initialized to any value while it is hoisted (unlike var, which gets initialized as undefined), resulting in the error - cannot access `result` before initialization. The time period between the let declared variables being hoisted and are initialized (initialized at runtime) is called the Temporal Dead Zone (TDZ). We cannot access a let (and const, as we will see later) variable while it is in TDZ. Read more about TDZ on <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let#temporal_dead_zone_tdz" target="_blank">MDN</a>.
+`result` is hoisted to the top of the if block, but is not initialized to any value while it is hoisted (unlike var, which gets initialized as `undefined`), resulting in the error - cannot access `result` before initialization. The time period between the let declared variables being hoisted and are initialized (initialized at runtime) is called the Temporal Dead Zone (TDZ). We cannot access a let (and const, as we will see later) variable while it is in TDZ. Read more about TDZ on <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let#temporal_dead_zone_tdz" target="_blank">MDN</a>.
 
 As we saw earlier, multiple var declarations with the same names are allowed. Multiple let declarations with the same identifier name becomes interesting:
 
@@ -239,7 +239,7 @@ function someFunc() {
 }
 ```
 
-Multiple const declarations with the same identifier names are simply not possible like we saw in case of let, and also because of the fact that const identifiers can't be re-initialized or re-assigned.
+Multiple const declarations with the same identifier names are not possible like we saw in case of let, and also because of the fact that const are constants and they can't be re-initialized or re-assigned.
 
 ## <a name="hoisting-function-expression-vs-function-declaration"></a> Hoisting: Function Declaration v/s Function Expression
 
@@ -268,7 +268,7 @@ var someOtherFunc = function someOtherFunc() {
 };
 ```
 
-An initial observation would be that the function declarations hoist, whereas function expressions don't. Well, it turns out, identifiers of both function declarations and function expressions hoist, but those of function declarations are assigned the function reference as they get hoisted, and those of function expressions aren't.
+An initial observation would suggest that only the function declarations are the ones that hoist, and function expressions don't. Well, it turns out that identifiers of both function declarations and function expressions hoist, but those of function declarations are assigned the function reference as they get hoisted, and those of function expressions aren't.
 
 As a side note, an interesting comparison of function expression identifiers declared with let/const and those with var:
 
@@ -286,4 +286,4 @@ let someOtherFunc = function () {
 };
 ```
 
-`someFunc` gets hoisted and assigned the value of undefined. And since type of undefined is not of the type of a function, it results in TypeError. `someOtherFunc` on the other hand gets hoisted but due to TDZ between the runtimes of it being called and it being hoisted/parsed, it results in ReferenceError.
+`someFunc` gets hoisted and assigned the value of undefined. And since type of undefined is not a function, it results in TypeError. `someOtherFunc` on the other hand gets hoisted but due to the temporal dead zone between it being called and it being hoisted/parsed due to the `let` declaration, it results in ReferenceError.
